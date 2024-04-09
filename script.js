@@ -8,29 +8,32 @@ function searchAndPlay() {
 }
 
 function searchForTrack(songName) {
-  var apiUrl = 'https://api.deezer.com/search?q=' + encodeURIComponent(songName);
+  var apiUrl = 'https://ws.audioscrobbler.com/2.0/?method=track.search&track=' + encodeURIComponent(songName) + '&api_key=b88d55f0dcd1940a2575dc70394e126d&format=json';
 
   fetch(apiUrl)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Erro ao buscar música: ' + response.status);
-      }
-      return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-      if (data.data && data.data.length > 0) {
-        var trackUrl = data.data[0].preview;
-        if (trackUrl) {
-          playSong(trackUrl);
-        } else {
-          alert("Nenhuma prévia de música encontrada.");
-        }
+      if (data.results && data.results.trackmatches && data.results.trackmatches.track.length > 0) {
+        var trackUrl = data.results.trackmatches.track[0].url;
+        fetch(trackUrl)
+          .then(response => response.json())
+          .then(trackData => {
+            if (trackData.track && trackData.track.url) {
+              playSong(trackData.track.url);
+            } else {
+              alert("URL de áudio inválido.");
+            }
+          })
+          .catch(error => {
+            console.error("Erro ao carregar URL de áudio:", error);
+            alert("Erro ao carregar música.");
+          });
       } else {
         alert("Nenhuma música encontrada.");
       }
     })
     .catch(error => {
-      console.error(error);
+      console.error("Erro ao buscar música:", error);
       alert("Erro ao buscar música.");
     });
 }
